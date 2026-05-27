@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react'
+import { asset } from '../asset'
 
-const ORNAMENT = '/units/title-ornament.png'
+const ORNAMENT = asset('units/title-ornament.png')
 
 /** Título de sección con un adorno a cada lado (el derecho reflejado en X). */
 export function SectionTitle({ children }: { children: ReactNode }) {

@@ -1,7 +1,8 @@
 import type { CSSProperties, ReactNode } from 'react'
+import { asset } from '../asset'
 
-const CORNER = '/units/frame-corner.png'
-const SIDE = '/units/frame-side.png'
+const CORNER = asset('units/frame-corner.png')
+const SIDE = asset('units/frame-side.png')
 
 interface Props {
   children: ReactNode

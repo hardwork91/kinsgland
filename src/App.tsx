@@ -33,22 +33,23 @@ function App() {
     <div className="flex h-screen flex-col bg-[#0b0f1a] text-neutral-100">
       <TopBar state={state} />
 
-      <main className="flex flex-1 items-stretch justify-center gap-4 overflow-hidden">
-        {/* Sider izquierdo: marco gris (solo laterales) */}
-        <div className="h-full shrink-0">
+      {/* Móvil: columna (apilado) y scroll. Desktop (lg+): 3 columnas sin scroll. */}
+      <main className="flex flex-1 flex-col items-stretch gap-3 overflow-y-auto p-2 lg:flex-row lg:justify-center lg:gap-4 lg:overflow-hidden lg:p-0">
+        {/* Sider izquierdo (oculto en móvil) */}
+        <div className="hidden shrink-0 lg:block lg:h-full lg:w-auto">
           <OrnateFrame
             corners={false}
             grayscale
             topBottom={false}
-            rootClassName="h-full"
-            className="h-full rounded-lg"
+            rootClassName="lg:h-full"
+            className="rounded-lg lg:h-full"
           >
             <UnitsCatalog />
           </OrnateFrame>
         </div>
 
         {/* Tablero con marco decorativo (slot: /ui/board-frame.png) */}
-        <div className="flex flex-1 items-center justify-center overflow-hidden">
+        <div className="flex w-full items-center justify-center lg:flex-1 lg:overflow-hidden">
           <div
             className="rounded-xl border-4 border-amber-900/50 bg-black/30 p-2 shadow-2xl shadow-black/60"
             style={{ width: 'min(82vh, 100%)', aspectRatio: '1' }}
@@ -57,14 +58,14 @@ function App() {
           </div>
         </div>
 
-        {/* Sider derecho: marco gris (solo laterales) */}
-        <div className="h-full shrink-0">
+        {/* Sider derecho */}
+        <div className="w-full shrink-0 lg:h-full lg:w-auto">
           <OrnateFrame
             corners={false}
             grayscale
             topBottom={false}
-            rootClassName="h-full"
-            className="h-full rounded-lg"
+            rootClassName="lg:h-full"
+            className="rounded-lg lg:h-full"
           >
             <InfoPanel state={state} />
           </OrnateFrame>

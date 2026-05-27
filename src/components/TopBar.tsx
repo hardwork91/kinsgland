@@ -4,6 +4,7 @@ import { Clock } from './Clock'
 import { ICON_BTN } from './theme'
 import { OrnateFrame } from './OrnateFrame'
 import { Coin } from './Coin'
+import { asset } from '../asset'
 
 const BOX_FILL =
   'rounded-[1.5rem] bg-gradient-to-b from-[#525c68] to-[#22262c]'
@@ -18,12 +19,12 @@ export function TopBar({ state }: { state: GameState }) {
   const me = state.players[state.currentTurn]
 
   return (
-    <header className="flex items-center gap-3 border-b-2 border-amber-800/50 bg-slate-950/90 px-4 pt-2">
+    <header className="flex flex-wrap items-center gap-2 border-b-2 border-amber-800/50 bg-slate-950/90 px-3 pt-2 lg:gap-3 lg:px-4">
       {/* Logo */}
       <img
-        src="/units/logo.png"
+        src={asset('units/logo.png')}
         alt="KingsLand"
-        className="h-20 w-auto object-contain drop-shadow"
+        className="h-12 w-auto object-contain drop-shadow lg:h-20"
         draggable={false}
       />
 

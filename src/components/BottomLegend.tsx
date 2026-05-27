@@ -16,7 +16,7 @@ function Item({ color, title, desc }: { color: string; title: string; desc: stri
 /** Leyenda inferior de los colores de casilla. */
 export function BottomLegend() {
   return (
-    <footer className="flex items-center justify-center gap-8 border-t border-amber-800/40 bg-slate-950/80 px-4 py-2">
+    <footer className="flex flex-wrap items-center justify-center gap-x-6 gap-y-1 border-t border-amber-800/40 bg-slate-950/80 px-4 py-2">
       <Item color="rgba(96,165,250,0.9)" title="Movimiento" desc="Puedes mover aquí" />
       <Item color="rgba(239,68,68,0.9)" title="Ataque" desc="Puede atacar aquí" />
       <Item color="rgba(168,85,247,0.9)" title="Fusión" desc="Une 2 iguales" />

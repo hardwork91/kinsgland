@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { BOARD_SIZE, type Unit, type UnitType } from '../types/game'
+import { asset } from '../asset'
 
 const OWNER_COLOR: Record<Unit['owner'], string> = {
   A: '#3b82f6', // azul
@@ -15,8 +16,8 @@ const OWNER_COLOR: Record<Unit['owner'], string> = {
  */
 function imgSrc(unit: Unit): string {
   const red = unit.owner === 'B' ? '-red' : ''
-  if (unit.type === 'king') return `/units/king${red}.png`
-  return `/units/${unit.type}${red}-${unit.level}.png`
+  if (unit.type === 'king') return asset(`units/king${red}.png`)
+  return asset(`units/${unit.type}${red}-${unit.level}.png`)
 }
 
 const STAR_POINTS =

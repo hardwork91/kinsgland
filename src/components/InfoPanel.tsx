@@ -30,7 +30,7 @@ export function InfoPanel({ state }: { state: GameState }) {
   const placing = phase === 'placement'
 
   return (
-    <aside className="flex w-72 shrink-0 flex-col gap-3">
+    <aside className="flex w-full shrink-0 flex-col gap-3 lg:w-72">
       {placing ? (
         <OrnateFrame className="rounded-[1.5rem] bg-gradient-to-b from-[#525c68] to-[#22262c]">
           <SectionTitle>Colocación</SectionTitle>

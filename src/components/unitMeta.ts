@@ -1,4 +1,5 @@
 import type { UnitType } from '../types/game'
+import { asset } from '../asset'
 
 export interface UnitMeta {
   name: string
@@ -13,24 +14,24 @@ export const UNIT_META: Record<UnitType, UnitMeta> = {
     name: 'Rey',
     short: 'Tu líder',
     desc: 'Protégelo a toda costa. Si cae, pierdes. Ataca cuerpo a cuerpo.',
-    portrait: '/units/king.png',
+    portrait: asset('units/king.png'),
   },
   knight: {
     name: 'Caballero',
     short: 'Melee',
     desc: 'Cuerpo a cuerpo: golpea a 1 casilla. El muro de tu ejército y escolta del rey.',
-    portrait: '/units/knight-1.png',
+    portrait: asset('units/knight-1.png'),
   },
   archer: {
     name: 'Arquero',
     short: 'Rango',
     desc: 'Ataque a distancia. Daño óptimo a 2 casillas (alcance 3). Frágil de cerca.',
-    portrait: '/units/archer-1.png',
+    portrait: asset('units/archer-1.png'),
   },
   mage: {
     name: 'Mago',
     short: 'Soporte',
     desc: 'Cura aliados o ataca enemigos según el objetivo. Óptimo adyacente (alcance 3).',
-    portrait: '/units/mage-1.png',
+    portrait: asset('units/mage-1.png'),
   },
 }

@@ -8,6 +8,7 @@ import {
   validRecruitCells,
 } from '../game/rules'
 import { Piece } from './Piece'
+import { asset } from '../asset'
 
 function key(row: number, col: number) {
   return `${row},${col}`
@@ -187,7 +188,7 @@ export function Board() {
   return (
     <div
       className="relative aspect-square w-full max-w-full select-none overflow-hidden rounded-md border border-neutral-700 bg-cover bg-center p-[10%] shadow-lg"
-      style={{ backgroundImage: `url(/units/${state.background}.png)` }}
+      style={{ backgroundImage: `url(${asset(`units/${state.background}.png`)})` }}
     >
       {/* Zona jugable (dentro del padding); casillas y piezas comparten este marco */}
       <div className="relative h-full w-full">
