@@ -38,6 +38,8 @@ interface GameStore {
   gameId: string | null
   /** Jugador que controla ESTE cliente. En hot-seat actuamos como el jugador en turno. */
   playerId: PlayerId | null
+  /** true = hot-seat (un dispositivo controla ambos); false = en red (cada quien su jugador). */
+  local: boolean
   /** Espejo local del estado de la partida (llega por suscripción). null = cargando. */
   state: GameState | null
 
@@ -78,9 +80,20 @@ interface GameStore {
   resolveTimeout: () => void
 }
 
+/** Devuelve el jugador en cuyo nombre puede actuar este cliente, o null si no es su turno. */
+function getActor(
+  state: GameState,
+  playerId: PlayerId | null,
+  local: boolean,
+): PlayerId | null {
+  if (local) return state.currentTurn
+  return playerId && playerId === state.currentTurn ? playerId : null
+}
+
 export const useGameStore = create<GameStore>((set, get) => ({
   gameId: null,
   playerId: null,
+  local: false,
   state: null,
   selectedUnitId: null,
   recruitMode: null,
@@ -105,16 +118,17 @@ export const useGameStore = create<GameStore>((set, get) => ({
     if (get().gameId) return
     const { gameId, playerId } = await createGame(name || 'Jugador A')
     const unsub = subscribeToGame(gameId, (s) => set({ state: s }))
-    set({ gameId, playerId, _unsub: unsub })
+    set({ gameId, playerId, local: false, _unsub: unsub })
     saveSession(gameId, playerId)
   },
 
   joinMatch: async (code, name) => {
     if (get().gameId) return
-    const unsub = subscribeToGame(code, (s) => set({ state: s }))
-    set({ _unsub: unsub })
+    // Unir primero (esto autentica de forma anónima) y luego suscribir,
+    // si no la primera lectura se deniega por reglas y el estado queda en null.
     const { playerId } = await joinGame(code, name || 'Jugador B')
-    set({ gameId: code, playerId })
+    const unsub = subscribeToGame(code, (s) => set({ state: s }))
+    set({ gameId: code, playerId, local: false, _unsub: unsub })
     saveSession(code, playerId)
   },
 
@@ -123,12 +137,15 @@ export const useGameStore = create<GameStore>((set, get) => ({
     const { gameId, playerId } = await createGame(name || 'Jugador A')
     await joinGame(gameId, 'Jugador B')
     const unsub = subscribeToGame(gameId, (s) => set({ state: s }))
-    set({ gameId, playerId, _unsub: unsub })
+    set({ gameId, playerId, local: true, _unsub: unsub })
     saveSession(gameId, playerId)
   },
 
   tryReconnect: async () => {
     if (get().gameId) return
+    // Si venimos de un enlace de invitación (?code=), NO reconectar a la partida vieja:
+    // hay que unirse a la partida invitada desde el menú (con el código precargado).
+    if (new URLSearchParams(window.location.search).get('code')) return
     let saved: { gameId: string; playerId: PlayerId } | null = null
     try {
       const raw = localStorage.getItem(SAVE_KEY)
@@ -138,12 +155,13 @@ export const useGameStore = create<GameStore>((set, get) => ({
     }
     if (!saved) return
     const existing = await getGame(saved.gameId)
-    if (!existing) {
+    // No reconectar si la partida ya no existe o terminó.
+    if (!existing || existing.phase === 'finished') {
       clearSession()
       return
     }
     const unsub = subscribeToGame(saved.gameId, (s) => set({ state: s }))
-    set({ gameId: saved.gameId, playerId: saved.playerId, _unsub: unsub })
+    set({ gameId: saved.gameId, playerId: saved.playerId, local: false, _unsub: unsub })
   },
 
   reset: async () => {
@@ -152,6 +170,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
     set({
       gameId: null,
       playerId: null,
+      local: false,
       state: null,
       selectedUnitId: null,
       recruitMode: null,
@@ -160,31 +179,33 @@ export const useGameStore = create<GameStore>((set, get) => ({
   },
 
   placeKing: (col) => {
-    const { gameId, state } = get()
+    const { gameId, state, playerId, local } = get()
     if (!gameId || !state) return
+    const actor = getActor(state, playerId, local)
+    if (!actor) return
     playSound('place')
-    void performAction(gameId, state.currentTurn, {
-      type: 'placeKing',
-      player: state.currentTurn,
-      col,
-    })
+    void performAction(gameId, actor, { type: 'placeKing', player: actor, col })
   },
 
   select: (unitId) => set({ selectedUnitId: unitId, recruitMode: null }),
 
   move: (unitId, dest) => {
-    const { gameId, state } = get()
+    const { gameId, state, playerId, local } = get()
     if (!gameId || !state) return
+    const actor = getActor(state, playerId, local)
+    if (!actor) return
     const unit = state.units[unitId]
     // El rey consume todos los AP → deseleccionar; el resto sigue seleccionado.
     set({ selectedUnitId: unit && unit.type === 'king' ? null : unitId })
     playSound('move')
-    void performAction(gameId, state.currentTurn, { type: 'move', unitId, dest })
+    void performAction(gameId, actor, { type: 'move', unitId, dest })
   },
 
   attack: (attackerId, target) => {
-    const { gameId, state } = get()
+    const { gameId, state, playerId, local } = get()
     if (!gameId || !state) return
+    const actor = getActor(state, playerId, local)
+    if (!actor) return
     const attacker = state.units[attackerId]
     const targetUnit = unitAt(state, target)
     set({ selectedUnitId: attackerId })
@@ -194,21 +215,25 @@ export const useGameStore = create<GameStore>((set, get) => ({
       get()._pushEffect(target.row, target.col, `-${dmg}`, 'dmg')
     }
     playSound('attack')
-    void performAction(gameId, state.currentTurn, { type: 'attack', attackerId, target })
+    void performAction(gameId, actor, { type: 'attack', attackerId, target })
   },
 
   fuse: (sourceId, targetCoord) => {
-    const { gameId, state } = get()
+    const { gameId, state, playerId, local } = get()
     if (!gameId || !state) return
+    const actor = getActor(state, playerId, local)
+    if (!actor) return
     const target = unitAt(state, targetCoord)
     set({ selectedUnitId: target ? target.id : null })
     playSound('fuse')
-    void performAction(gameId, state.currentTurn, { type: 'fuse', sourceId, targetCoord })
+    void performAction(gameId, actor, { type: 'fuse', sourceId, targetCoord })
   },
 
   heal: (mageId, targetCoord) => {
-    const { gameId, state } = get()
+    const { gameId, state, playerId, local } = get()
     if (!gameId || !state) return
+    const actor = getActor(state, playerId, local)
+    if (!actor) return
     const mage = state.units[mageId]
     const target = unitAt(state, targetCoord)
     set({ selectedUnitId: mageId })
@@ -217,24 +242,28 @@ export const useGameStore = create<GameStore>((set, get) => ({
       get()._pushEffect(targetCoord.row, targetCoord.col, `+${Math.max(power, 0)}`, 'heal')
     }
     playSound('heal')
-    void performAction(gameId, state.currentTurn, { type: 'heal', mageId, targetCoord })
+    void performAction(gameId, actor, { type: 'heal', mageId, targetCoord })
   },
 
   setRecruitMode: (type) => set({ recruitMode: type, selectedUnitId: null }),
 
   recruit: (dest) => {
-    const { gameId, state, recruitMode } = get()
+    const { gameId, state, recruitMode, playerId, local } = get()
     if (!gameId || !state || !recruitMode) return
+    const actor = getActor(state, playerId, local)
+    if (!actor) return
     set({ recruitMode: null })
     playSound('recruit')
-    void performAction(gameId, state.currentTurn, { type: 'recruit', unitType: recruitMode, dest })
+    void performAction(gameId, actor, { type: 'recruit', unitType: recruitMode, dest })
   },
 
   endTurn: () => {
-    const { gameId, state } = get()
+    const { gameId, state, playerId, local } = get()
     if (!gameId || !state) return
+    const actor = getActor(state, playerId, local)
+    if (!actor) return
     set({ selectedUnitId: null, recruitMode: null })
-    void performAction(gameId, state.currentTurn, { type: 'endTurn' })
+    void performAction(gameId, actor, { type: 'endTurn' })
   },
 
   resolveTimeout: () => {

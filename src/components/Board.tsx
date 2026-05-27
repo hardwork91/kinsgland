@@ -32,16 +32,20 @@ export function Board() {
   const setRecruitMode = useGameStore((s) => s.setRecruitMode)
   const placeKing = useGameStore((s) => s.placeKing)
   const effects = useGameStore((s) => s.effects)
+  const playerId = useGameStore((s) => s.playerId)
+  const local = useGameStore((s) => s.local)
 
   if (!state) return null
 
   const { units, currentTurn, apRemaining, phase } = state
+  // En red solo puedes interactuar en tu turno; en local controlas ambos.
+  const isMyTurn = local || playerId === currentTurn
   const placing = phase === 'placement'
 
   // Fase de colocación: casillas vacías de la fila trasera del jugador que coloca.
   const placementBackRow = currentTurn === 'A' ? 0 : 7
   const placementTargets = new Set<string>(
-    placing
+    placing && isMyTurn
       ? Array.from({ length: BOARD_SIZE }, (_, col) => key(placementBackRow, col)).filter((k) => {
           const [r, c] = k.split(',').map(Number)
           return !Object.values(units).some((u) => u.pos.row === r && u.pos.col === c)
@@ -49,7 +53,7 @@ export function Board() {
       : [],
   )
   const selectedUnit = selectedUnitId ? units[selectedUnitId] : null
-  const canAct = !!selectedUnit && selectedUnit.owner === currentTurn && apRemaining > 0
+  const canAct = isMyTurn && !!selectedUnit && selectedUnit.owner === currentTurn && apRemaining > 0
 
   // El rey solo puede moverse al inicio del turno (AP completo).
   const kingCanMove =

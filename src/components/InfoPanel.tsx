@@ -22,12 +22,17 @@ export function InfoPanel({ state }: { state: GameState }) {
   const recruitMode = useGameStore((s) => s.recruitMode)
   const setRecruitMode = useGameStore((s) => s.setRecruitMode)
   const endTurn = useGameStore((s) => s.endTurn)
+  const playerId = useGameStore((s) => s.playerId)
+  const local = useGameStore((s) => s.local)
 
   const { currentTurn, apRemaining, players, phase, firstPlayer } = state
   const resources = players[currentTurn].resources
   const sel = selectedUnitId ? state.units[selectedUnitId] : null
   const hasCells = validRecruitCells(state, currentTurn).length > 0
   const placing = phase === 'placement'
+  // En red, solo puedes actuar en tu turno.
+  const isMyTurn = local || playerId === currentTurn
+  const rival = players[currentTurn].name
 
   return (
     <aside className="flex w-full shrink-0 flex-col gap-3 lg:w-72">
@@ -37,10 +42,15 @@ export function InfoPanel({ state }: { state: GameState }) {
           <p className="text-sm text-amber-300">
             Sorteo: empieza <strong>{players[firstPlayer].name}</strong>.
           </p>
-          <p className="mt-2 text-sm text-slate-300">
-            <strong>{players[currentTurn].name}</strong>: elige una casilla resaltada en tu fila
-            para colocar tu rey.
-          </p>
+          {isMyTurn ? (
+            <p className="mt-2 text-sm text-slate-300">
+              Elige una casilla resaltada en tu fila para colocar tu rey.
+            </p>
+          ) : (
+            <p className="mt-2 text-sm text-slate-400">
+              ⏳ Esperando a que <strong>{rival}</strong> coloque su rey…
+            </p>
+          )}
         </OrnateFrame>
       ) : (
         <>
@@ -83,6 +93,8 @@ export function InfoPanel({ state }: { state: GameState }) {
             )}
           </OrnateFrame>
 
+          {isMyTurn ? (
+            <>
           {/* ACCIONES */}
           <OrnateFrame className="rounded-[1.5rem] bg-gradient-to-b from-[#525c68] to-[#22262c]">
             <SectionTitle>Acciones</SectionTitle>
@@ -140,10 +152,18 @@ export function InfoPanel({ state }: { state: GameState }) {
               <p className="mt-2 text-xs text-emerald-400">Elige una casilla verde para colocar.</p>
             )}
           </OrnateFrame>
+            </>
+          ) : (
+            <OrnateFrame className="rounded-[1.5rem] bg-gradient-to-b from-[#525c68] to-[#22262c]">
+              <p className="text-center text-sm text-slate-300">
+                ⏳ Turno de <strong>{rival}</strong>. Espera tu turno…
+              </p>
+            </OrnateFrame>
+          )}
         </>
       )}
 
-      {!placing && (
+      {!placing && isMyTurn && (
         <button type="button" onClick={endTurn} className={GOLD_BTN}>
           Terminar turno
         </button>

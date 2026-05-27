@@ -15,8 +15,11 @@ export function TopBar({ state }: { state: GameState }) {
   const muted = useGameStore((s) => s.muted)
   const toggleMute = useGameStore((s) => s.toggleMute)
   const reset = useGameStore((s) => s.reset)
+  const playerId = useGameStore((s) => s.playerId)
+  const local = useGameStore((s) => s.local)
 
-  const me = state.players[state.currentTurn]
+  // En red, muestro mi propia identidad; en local (hot-seat), el jugador en turno.
+  const me = state.players[local || !playerId ? state.currentTurn : playerId]
 
   return (
     <header className="flex flex-wrap items-center gap-2 border-b-2 border-amber-800/50 bg-slate-950/90 px-3 pt-2 lg:gap-3 lg:px-4">

@@ -10,8 +10,10 @@ import { ensureAuth, getFirebase } from './firebase'
  * (store) no cambia: solo cambia qué módulo se exporta desde api/index.ts.
  */
 
+// Namespace propio para no colisionar con otros proyectos que compartan la RTDB
+// (p. ej. Olympus Protocol usa `games/`).
 function gamePath(gameId: string) {
-  return `games/${gameId}`
+  return `kingsland/${gameId}`
 }
 
 function generateGameId(): string {
@@ -74,6 +76,7 @@ export function subscribeToGame(gameId: string, cb: (state: GameState) => void):
 }
 
 export async function getGame(gameId: string): Promise<GameState | null> {
+  await ensureAuth()
   const { db } = getFirebase()
   const snap = await get(ref(db, gamePath(gameId)))
   return snap.exists() ? normalizeState(snap.val() as GameState) : null

@@ -3,10 +3,13 @@ import { useGameStore } from '../store/gameStore'
 import { backend } from '../api'
 
 /** Pantalla inicial: nombre + crear/unirse/jugar local. */
+/** Código de sala precargado desde la URL (?code=ABC123), si viene en un enlace compartido. */
+const codeFromUrl = new URLSearchParams(window.location.search).get('code')?.toUpperCase() ?? ''
+
 export function Menu() {
   const [name, setName] = useState('')
-  const [code, setCode] = useState('')
-  const [joining, setJoining] = useState(false)
+  const [code, setCode] = useState(codeFromUrl)
+  const [joining, setJoining] = useState(codeFromUrl.length > 0)
   const startLocalGame = useGameStore((s) => s.startLocalGame)
   const createMatch = useGameStore((s) => s.createMatch)
   const joinMatch = useGameStore((s) => s.joinMatch)
