@@ -72,7 +72,10 @@ export function applyAttack(state: GameState, attackerId: string, target: Coord)
 
   const units = { ...state.units }
   let players = state.players
-  let result = state.result
+  // RTDB borra las claves con `null`, así que al releer el estado `result` llega
+  // como `undefined`. Lo normalizamos a `null` para no reinyectar `undefined`
+  // en la escritura (RTDB rechaza toda la transacción si contiene `undefined`).
+  let result: GameResult | null = state.result ?? null
   let phase = state.phase
 
   const newStat = targetUnit.stat - power

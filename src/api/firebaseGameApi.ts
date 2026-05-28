@@ -28,6 +28,26 @@ function normalizeState(raw: GameState): GameState {
   return { ...raw, units: raw.units ?? {} }
 }
 
+/**
+ * RTDB rechaza CUALQUIER escritura que contenga `undefined` (lanza
+ * "Data returned contains undefined in property ...") y aborta la transacción
+ * entera. Limpiamos recursivamente las propiedades `undefined` antes de
+ * devolver el estado en una transacción.
+ */
+function stripUndefined<T>(value: T): T {
+  if (Array.isArray(value)) {
+    return value.map((v) => stripUndefined(v)) as unknown as T
+  }
+  if (value !== null && typeof value === 'object') {
+    const out: Record<string, unknown> = {}
+    for (const [k, v] of Object.entries(value as Record<string, unknown>)) {
+      if (v !== undefined) out[k] = stripUndefined(v)
+    }
+    return out as T
+  }
+  return value
+}
+
 export async function createGame(
   playerName = 'Jugador A',
 ): Promise<{ gameId: string; playerId: PlayerId }> {
@@ -46,7 +66,7 @@ export async function joinGame(
   const { db } = getFirebase()
   const result = await runTransaction(ref(db, gamePath(gameId)), (current: GameState | null) => {
     if (current === null) return current
-    return applyAction(normalizeState(current), { type: 'join', name: playerName })
+    return stripUndefined(applyAction(normalizeState(current), { type: 'join', name: playerName }))
   })
   if (!result.committed || !result.snapshot.exists()) {
     throw new Error(`Partida no encontrada: ${gameId}`)
@@ -62,7 +82,7 @@ export async function performAction(
   const { db } = getFirebase()
   const result = await runTransaction(ref(db, gamePath(gameId)), (current: GameState | null) => {
     if (current === null) return current // abortar si no existe
-    return applyAction(normalizeState(current), action)
+    return stripUndefined(applyAction(normalizeState(current), action))
   })
   return normalizeState(result.snapshot.val())
 }
