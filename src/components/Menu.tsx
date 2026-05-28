@@ -11,6 +11,7 @@ export function Menu() {
   const [code, setCode] = useState(codeFromUrl)
   const [joining, setJoining] = useState(codeFromUrl.length > 0)
   const startLocalGame = useGameStore((s) => s.startLocalGame)
+  const startAIGame = useGameStore((s) => s.startAIGame)
   const createMatch = useGameStore((s) => s.createMatch)
   const joinMatch = useGameStore((s) => s.joinMatch)
 
@@ -40,6 +41,14 @@ export function Menu() {
           className="rounded-md bg-blue-600 px-4 py-2 font-medium transition hover:bg-blue-500"
         >
           Jugar local (hot-seat)
+        </button>
+
+        <button
+          type="button"
+          onClick={() => void startAIGame(name)}
+          className="rounded-md bg-emerald-600 px-4 py-2 font-medium transition hover:bg-emerald-500"
+        >
+          🤖 Jugar vs Computadora
         </button>
 
         <div className="h-px bg-neutral-700" />

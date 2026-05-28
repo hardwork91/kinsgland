@@ -258,7 +258,7 @@ export function resolveTimeout(state: GameState): GameState {
 
 /** Acción que un jugador puede ejecutar. Es lo que viaja por la API/red. */
 export type GameAction =
-  | { type: 'join'; name: string }
+  | { type: 'join'; name: string; isAI?: boolean }
   | { type: 'pickRace'; player: PlayerId; race: Race }
   | { type: 'placeKing'; player: PlayerId; col: number }
   | { type: 'move'; unitId: string; dest: Coord }
@@ -278,9 +278,12 @@ export function applyAction(state: GameState, action: GameAction): GameState {
   // El segundo jugador se une: el lobby pasa a la fase de elección de razas.
   if (action.type === 'join') {
     if (state.phase !== 'lobby') return state
+    const b = { ...state.players.B, name: action.name }
+    // Solo añadimos isAI si viene true (RTDB rechaza undefined y borra null).
+    if (action.isAI) b.isAI = true
     return {
       ...state,
-      players: { ...state.players, B: { ...state.players.B, name: action.name } },
+      players: { ...state.players, B: b },
       phase: 'pickRace',
       currentTurn: state.firstPlayer,
     }

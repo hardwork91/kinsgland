@@ -44,10 +44,11 @@ export async function createGame(
 export async function joinGame(
   gameId: string,
   playerName = 'Jugador B',
+  isAI = false,
 ): Promise<{ playerId: PlayerId }> {
   const state = games.get(gameId)
   if (!state) throw new Error(`Partida no encontrada: ${gameId}`)
-  games.set(gameId, applyAction(state, { type: 'join', name: playerName }))
+  games.set(gameId, applyAction(state, { type: 'join', name: playerName, isAI }))
   notify(gameId)
   return { playerId: 'B' }
 }

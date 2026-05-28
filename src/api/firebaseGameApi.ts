@@ -61,12 +61,15 @@ export async function createGame(
 export async function joinGame(
   gameId: string,
   playerName = 'Jugador B',
+  isAI = false,
 ): Promise<{ playerId: PlayerId }> {
   await ensureAuth()
   const { db } = getFirebase()
   const result = await runTransaction(ref(db, gamePath(gameId)), (current: GameState | null) => {
     if (current === null) return current
-    return stripUndefined(applyAction(normalizeState(current), { type: 'join', name: playerName }))
+    return stripUndefined(
+      applyAction(normalizeState(current), { type: 'join', name: playerName, isAI }),
+    )
   })
   if (!result.committed || !result.snapshot.exists()) {
     throw new Error(`Partida no encontrada: ${gameId}`)

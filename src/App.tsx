@@ -10,6 +10,7 @@ import { WaitingRoom } from './components/WaitingRoom'
 import { RacePicker } from './components/RacePicker'
 import { OrnateFrame } from './components/OrnateFrame'
 import { useGameStore } from './store/gameStore'
+import { setupAIDriver } from './ai/driver'
 
 function App() {
   const gameId = useGameStore((s) => s.gameId)
@@ -18,6 +19,9 @@ function App() {
 
   useEffect(() => {
     void tryReconnect()
+    // Engancha el driver de la IA: actúa cuando le toca el turno en partidas vs IA.
+    const unsub = setupAIDriver()
+    return unsub
   }, [tryReconnect])
 
   if (!gameId) return <Menu />
