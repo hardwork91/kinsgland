@@ -80,11 +80,13 @@ function LevelDots({ unit }: { unit: Unit }) {
 interface PieceProps {
   unit: Unit
   selected: boolean
+  /** El tablero está rotado 180º: contrarrota el arte/insignias para que queden derechos. */
+  flip?: boolean
   onClick: () => void
 }
 
 /** Una unidad renderizada en una capa absoluta sobre el tablero. */
-export function Piece({ unit, selected, onClick }: PieceProps) {
+export function Piece({ unit, selected, flip = false, onClick }: PieceProps) {
   const cell = 100 / BOARD_SIZE
   const left = unit.pos.col * cell
   const top = unit.pos.row * cell
@@ -108,8 +110,11 @@ export function Piece({ unit, selected, onClick }: PieceProps) {
         />
       )}
 
-      {/* Imagen de la unidad */}
-      <div className="relative flex h-[90%] w-[90%] items-center justify-center rounded-lg">
+      {/* Imagen de la unidad (contrarrotada si el tablero está rotado) */}
+      <div
+        className="relative flex h-[90%] w-[90%] items-center justify-center rounded-lg"
+        style={flip ? { transform: 'rotate(180deg)' } : undefined}
+      >
         <UnitVisual key={imgSrc(unit)} unit={unit} />
 
         {/* Stat (vida = ataque) como insignia */}
