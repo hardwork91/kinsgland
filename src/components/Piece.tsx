@@ -93,7 +93,6 @@ export function Piece({ unit, race, selected, flip = false, onClick }: PieceProp
   const cell = 100 / BOARD_SIZE
   const left = unit.pos.col * cell
   const top = unit.pos.row * cell
-  const color = OWNER_COLOR[unit.owner]
 
   return (
     <button
@@ -120,10 +119,18 @@ export function Piece({ unit, race, selected, flip = false, onClick }: PieceProp
       >
         <UnitVisual key={imgSrc(unit, race)} unit={unit} race={race} />
 
-        {/* HP actual como insignia (la cifra que cambia con el combate) */}
+        {/* Ataque (constante) como insignia arriba-izquierda */}
+        <span
+          className="absolute -left-[5%] -top-[5%] flex h-[36%] w-[36%] items-center justify-center rounded-full text-[100%] font-bold text-white"
+          style={{ backgroundColor: '#0b0f1a', boxShadow: '0 1px 3px rgba(0,0,0,0.6)' }}
+        >
+          {unit.attack}
+        </span>
+
+        {/* HP actual como insignia arriba-derecha (la cifra que cambia con el combate) */}
         <span
           className="absolute -right-[5%] -top-[5%] flex h-[36%] w-[36%] items-center justify-center rounded-full text-[100%] font-bold text-white"
-          style={{ backgroundColor: color, boxShadow: '0 1px 3px rgba(0,0,0,0.6)' }}
+          style={{ backgroundColor: '#0b0f1a', boxShadow: '0 1px 3px rgba(0,0,0,0.6)' }}
         >
           {unit.hp}
         </span>
