@@ -1,9 +1,10 @@
 import {
   KING_STAT,
-  STAT_CAP_BY_LEVEL,
+  statCap,
   type Coord,
   type Level,
   type PlayerId,
+  type Race,
   type Unit,
   type UnitType,
 } from '../types/game'
@@ -24,13 +25,17 @@ export function nextUnitId(): string {
   return `u_${Date.now().toString(36)}_${seq}_${rand}`
 }
 
-/** Crea una unidad nueva. El rey arranca en KING_STAT; el resto al cap de su nivel. */
+/**
+ * Crea una unidad nueva. El rey arranca en KING_STAT (idéntico entre razas);
+ * el resto al cap de su nivel SEGÚN LA RAZA del jugador.
+ */
 export function createUnit(
   type: UnitType,
   owner: PlayerId,
   pos: Coord,
+  race: Race,
   level: Level = 1,
 ): Unit {
-  const stat = type === 'king' ? KING_STAT : STAT_CAP_BY_LEVEL[level]
+  const stat = type === 'king' ? KING_STAT : statCap(race, type, level)
   return { id: nextUnitId(), type, owner, level, stat, pos }
 }

@@ -1,4 +1,4 @@
-import { BOARD_SIZE, MAX_AP_PER_TURN, type Coord, type Unit } from '../types/game'
+import { BOARD_SIZE, MAX_AP_PER_TURN, playerRace, type Coord, type Unit } from '../types/game'
 import { useGameStore } from '../store/gameStore'
 import {
   validAttacks,
@@ -41,6 +41,13 @@ export function Board() {
   // En red solo puedes interactuar en tu turno; en local controlas ambos.
   const isMyTurn = local || playerId === currentTurn
   const placing = phase === 'placement'
+
+  // Perspectiva del tablero (estilo ajedrez): cada jugador ve SU lado abajo.
+  // - En red: según tu jugador fijo (playerId).
+  // - En local (hot-seat): rota según el jugador en turno (pasa-y-juega).
+  // El jugador A nace en la fila 0 (arriba), así que su vista se rota 180º.
+  const perspective = local ? currentTurn : playerId
+  const flip = perspective === 'A'
 
   // Fase de colocación: casillas vacías de la fila trasera del jugador que coloca.
   const placementBackRow = currentTurn === 'A' ? 0 : 7
@@ -194,8 +201,12 @@ export function Board() {
       className="relative aspect-square w-full max-w-full select-none overflow-hidden rounded-md border border-neutral-700 bg-cover bg-center p-[10%] shadow-lg"
       style={{ backgroundImage: `url(${asset(`units/${state.background}.png`)})` }}
     >
-      {/* Zona jugable (dentro del padding); casillas y piezas comparten este marco */}
-      <div className="relative h-full w-full">
+      {/* Zona jugable (dentro del padding); casillas y piezas comparten este marco.
+          Se rota 180º según la perspectiva del jugador (el fondo NO se rota). */}
+      <div
+        className="relative h-full w-full"
+        style={flip ? { transform: 'rotate(180deg)' } : undefined}
+      >
         {/* Capa de casillas */}
         <div
           className="grid h-full w-full"
@@ -214,7 +225,9 @@ export function Board() {
               <Piece
                 key={unit.id}
                 unit={unit}
+                race={playerRace(state, unit.owner)}
                 selected={unit.id === selectedUnitId}
+                flip={flip}
                 onClick={() => onPieceClick(unit)}
               />
             ))}
@@ -235,7 +248,10 @@ export function Board() {
                 textShadow: '0 1px 3px rgba(0,0,0,0.9)',
               }}
             >
-              {e.text}
+              {/* Contrarrota el texto para que no quede de cabeza cuando el tablero está rotado. */}
+              <span className="inline-block" style={flip ? { transform: 'rotate(180deg)' } : undefined}>
+                {e.text}
+              </span>
             </span>
           ))}
         </div>

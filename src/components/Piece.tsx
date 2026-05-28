@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { BOARD_SIZE, type Unit, type UnitType } from '../types/game'
+import { BOARD_SIZE, type Race, type Unit, type UnitType } from '../types/game'
 import { asset } from '../asset'
 
 const OWNER_COLOR: Record<Unit['owner'], string> = {
@@ -8,16 +8,17 @@ const OWNER_COLOR: Record<Unit['owner'], string> = {
 }
 
 /**
- * Ruta de la imagen según tipo, dueño y nivel de fusión (en public/units/).
+ * Ruta de la imagen según raza, tipo, dueño y nivel de fusión (en public/units/).
+ * - Cada raza tiene su propio set de sprites: `{race}-...` (human/orc/elf).
  * - Jugador A usa la base; jugador B usa la variante "-red".
- * - No-rey: `{tipo}[-red]-{nivel}.png` (ej. knight-2.png, archer-red-1.png).
- * - Rey: `king[-red].png` (sin nivel).
+ * - No-rey: `{race}-{tipo}[-red]-{nivel}.png` (ej. orc-knight-2.png).
+ * - Rey:    `{race}-king[-red].png` (sin nivel).
  * Si el archivo falta, se usa la forma SVG de respaldo.
  */
-function imgSrc(unit: Unit): string {
+function imgSrc(unit: Unit, race: Race): string {
   const red = unit.owner === 'B' ? '-red' : ''
-  if (unit.type === 'king') return asset(`units/king${red}.png`)
-  return asset(`units/${unit.type}${red}-${unit.level}.png`)
+  if (unit.type === 'king') return asset(`units/${race}-king${red}.png`)
+  return asset(`units/${race}-${unit.type}${red}-${unit.level}.png`)
 }
 
 const STAR_POINTS =
@@ -39,7 +40,7 @@ function Shape({ type, color }: { type: UnitType; color: string }) {
 }
 
 /** Imagen de la unidad con fallback a la forma SVG si el archivo no existe. */
-function UnitVisual({ unit }: { unit: Unit }) {
+function UnitVisual({ unit, race }: { unit: Unit; race: Race }) {
   const [imgError, setImgError] = useState(false)
   const color = OWNER_COLOR[unit.owner]
 
@@ -52,7 +53,7 @@ function UnitVisual({ unit }: { unit: Unit }) {
   }
   return (
     <img
-      src={imgSrc(unit)}
+      src={imgSrc(unit, race)}
       alt={unit.type}
       draggable={false}
       onError={() => setImgError(true)}
@@ -79,12 +80,16 @@ function LevelDots({ unit }: { unit: Unit }) {
 
 interface PieceProps {
   unit: Unit
+  /** Raza del dueño (define qué sprite cargar). */
+  race: Race
   selected: boolean
+  /** El tablero está rotado 180º: contrarrota el arte/insignias para que queden derechos. */
+  flip?: boolean
   onClick: () => void
 }
 
 /** Una unidad renderizada en una capa absoluta sobre el tablero. */
-export function Piece({ unit, selected, onClick }: PieceProps) {
+export function Piece({ unit, race, selected, flip = false, onClick }: PieceProps) {
   const cell = 100 / BOARD_SIZE
   const left = unit.pos.col * cell
   const top = unit.pos.row * cell
@@ -108,9 +113,12 @@ export function Piece({ unit, selected, onClick }: PieceProps) {
         />
       )}
 
-      {/* Imagen de la unidad */}
-      <div className="relative flex h-[90%] w-[90%] items-center justify-center rounded-lg">
-        <UnitVisual key={imgSrc(unit)} unit={unit} />
+      {/* Imagen de la unidad (contrarrotada si el tablero está rotado) */}
+      <div
+        className="relative flex h-[90%] w-[90%] items-center justify-center rounded-lg"
+        style={flip ? { transform: 'rotate(180deg)' } : undefined}
+      >
+        <UnitVisual key={imgSrc(unit, race)} unit={unit} race={race} />
 
         {/* Stat (vida = ataque) como insignia */}
         <span

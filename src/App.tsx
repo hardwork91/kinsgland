@@ -7,6 +7,7 @@ import { BottomLegend } from './components/BottomLegend'
 import { EndScreen } from './components/EndScreen'
 import { Menu } from './components/Menu'
 import { WaitingRoom } from './components/WaitingRoom'
+import { RacePicker } from './components/RacePicker'
 import { OrnateFrame } from './components/OrnateFrame'
 import { useGameStore } from './store/gameStore'
 
@@ -21,6 +22,7 @@ function App() {
 
   if (!gameId) return <Menu />
   if (state && state.phase === 'lobby') return <WaitingRoom />
+  if (state && state.phase === 'pickRace') return <RacePicker />
   if (!state) {
     return (
       <div className="flex min-h-full items-center justify-center bg-[#0b0f1a] text-neutral-400">

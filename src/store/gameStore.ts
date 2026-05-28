@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import type { Coord, GameState, PlayerId, UnitType } from '../types/game'
+import type { Coord, GameState, PlayerId, Race, UnitType } from '../types/game'
 import { chebyshev, unitAt } from '../game/board'
 import { attackPower, healPower } from '../game/rules'
 import { createGame, getGame, joinGame, performAction, subscribeToGame } from '../api'
@@ -68,6 +68,7 @@ interface GameStore {
   reset: () => Promise<void>
 
   // --- Acciones (dispatch vía performAction) ---
+  pickRace: (race: Race) => void
   placeKing: (col: number) => void
   select: (unitId: string | null) => void
   move: (unitId: string, dest: Coord) => void
@@ -176,6 +177,14 @@ export const useGameStore = create<GameStore>((set, get) => ({
       recruitMode: null,
       _unsub: null,
     })
+  },
+
+  pickRace: (race) => {
+    const { gameId, state, playerId, local } = get()
+    if (!gameId || !state) return
+    const actor = getActor(state, playerId, local)
+    if (!actor) return
+    void performAction(gameId, actor, { type: 'pickRace', player: actor, race })
   },
 
   placeKing: (col) => {
