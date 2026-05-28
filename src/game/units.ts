@@ -1,8 +1,6 @@
 import {
   baseAttack,
   baseHp,
-  KING_ATTACK,
-  KING_HP,
   type Coord,
   type Level,
   type PlayerId,
@@ -28,16 +26,18 @@ export function nextUnitId(): string {
 }
 
 /**
- * Crea una unidad nueva con sus dos stats (ataque + HP).
+ * Crea una unidad nueva con sus dos stats (ataque + HP) según la raza.
  *
- *  - Rey: ataque KING_ATTACK (5), HP KING_HP (10). Igual entre razas.
- *  - Otras: en lvl 1 toma el base de la raza. En niveles superiores (creación
- *    directa, sin pasar por fusión) escala 2^(level-1) — equivale a la salida
- *    natural de fusionar lvl 1 → lvl 2 → lvl 3.
+ *  - Todas las unidades (rey incluido) sacan su atk/HP de BASE_ATTACK/BASE_HP
+ *    indexado por [raza][tipo].
+ *  - El rey NO escala con nivel (no se recluta ni se fusiona): siempre toma
+ *    los valores base de su raza.
+ *  - Las demás unidades escalan 2^(level-1) — equivale a la salida natural de
+ *    fusionar lvl 1 → lvl 2 → lvl 3.
  *
  * Notas:
  *  - hp inicial = maxHp (unidad recién creada está a tope).
- *  - El ataque NO baja con el daño; solo cambia por fusión.
+ *  - El ataque NO baja con el daño; solo cambia por fusión (que lo duplica).
  */
 export function createUnit(
   type: UnitType,
@@ -46,19 +46,7 @@ export function createUnit(
   race: Race,
   level: Level = 1,
 ): Unit {
-  if (type === 'king') {
-    return {
-      id: nextUnitId(),
-      type,
-      owner,
-      level,
-      attack: KING_ATTACK,
-      hp: KING_HP,
-      maxHp: KING_HP,
-      pos,
-    }
-  }
-  const scale = level === 1 ? 1 : level === 2 ? 2 : 4
+  const scale = type === 'king' ? 1 : level === 1 ? 1 : level === 2 ? 2 : 4
   const attack = baseAttack(race, type) * scale
   const hp = baseHp(race, type) * scale
   return {

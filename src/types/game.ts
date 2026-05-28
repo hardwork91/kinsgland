@@ -83,10 +83,6 @@ export interface GameState {
 
 export const MAX_AP_PER_TURN = 3
 export const STARTING_RESOURCES = 6
-/** Vida del rey al inicio. */
-export const KING_HP = 10
-/** Ataque del rey (melee, dist 1). */
-export const KING_ATTACK = 5
 export const GAME_DURATION_MS = 15 * 60 * 1000 // 15 min
 
 /** Recursos obtenidos al matar una unidad según su nivel (no varía por raza). */
@@ -104,28 +100,32 @@ type RaceUnit = Exclude<UnitType, 'king'>
  * Ataque BASE (lvl 1) por (raza, tipo). La fusión lo duplica en cada nivel:
  *   lvl 1: base. lvl 2: base*2. lvl 3: base*4.
  *
+ * El rey NO se fusiona ni sube de nivel: el valor de 'king' es directamente
+ * lo que muestra en partida (constante por raza).
+ *
  * Diseño:
  *  - Humanos: baseline equilibrado (atk 2 en todo).
  *  - Orcos:   melee duro (knight atk 3), ranged flojo (archer/mage atk 1).
  *  - Elfos:   ranged afinado (archer/mage atk 3), melee frágil (knight atk 1).
+ *  - Reyes:   por ahora iguales entre razas (atk 5 / HP 10). Ajustables.
  */
-export const BASE_ATTACK: Record<Race, Record<RaceUnit, number>> = {
-  human: { knight: 2, archer: 2, mage: 2 },
-  orc: { knight: 3, archer: 1, mage: 1 },
-  elf: { knight: 1, archer: 3, mage: 3 },
+export const BASE_ATTACK: Record<Race, Record<UnitType, number>> = {
+  human: { king: 5, knight: 2, archer: 2, mage: 2 },
+  orc: { king: 5, knight: 3, archer: 1, mage: 1 },
+  elf: { king: 5, knight: 1, archer: 3, mage: 3 },
 }
 
 /**
- * HP BASE (lvl 1) por (raza, tipo). Ratio 2:1 contra ataque (mismo ratio que
- * el rey: 10 HP / 5 atk). La fusión SUMA HPs actuales (heredan daño).
+ * HP BASE (lvl 1) por (raza, tipo). Ratio 2:1 contra ataque por defecto.
+ * El rey usa su HP directamente (no se fusiona).
  */
-export const BASE_HP: Record<Race, Record<RaceUnit, number>> = {
-  human: { knight: 4, archer: 4, mage: 4 },
-  orc: { knight: 6, archer: 2, mage: 2 },
-  elf: { knight: 2, archer: 6, mage: 6 },
+export const BASE_HP: Record<Race, Record<UnitType, number>> = {
+  human: { king: 10, knight: 4, archer: 4, mage: 4 },
+  orc: { king: 10, knight: 6, archer: 2, mage: 2 },
+  elf: { king: 10, knight: 2, archer: 6, mage: 6 },
 }
 
-/** Coste de reclutamiento por (raza, tipo). */
+/** Coste de reclutamiento por (raza, tipo no-rey). El rey no se recluta. */
 export const COST_BY_RACE: Record<Race, Record<RaceUnit, number>> = {
   human: { knight: 2, archer: 3, mage: 4 },
   orc: { knight: 3, archer: 3, mage: 4 },
@@ -148,13 +148,13 @@ export const RACE_LABEL: Record<Race, string> = {
 
 // --- Helpers de tablas (con backward-compat para partidas viejas) ---
 
-/** Ataque base (lvl 1) para una raza/tipo. */
-export function baseAttack(race: Race, type: RaceUnit): number {
+/** Ataque base (lvl 1) para una raza/tipo. Para king devuelve el ataque del rey. */
+export function baseAttack(race: Race, type: UnitType): number {
   return BASE_ATTACK[race][type]
 }
 
-/** HP base (lvl 1) para una raza/tipo. */
-export function baseHp(race: Race, type: RaceUnit): number {
+/** HP base (lvl 1) para una raza/tipo. Para king devuelve el HP del rey. */
+export function baseHp(race: Race, type: UnitType): number {
   return BASE_HP[race][type]
 }
 
