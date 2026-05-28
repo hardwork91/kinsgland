@@ -1,8 +1,8 @@
 import {
-  STAT_CAP_BY_LEVEL,
+  playerRace,
+  statCap,
   type Coord,
   type GameState,
-  type Level,
   type Unit,
 } from '../types/game'
 import { chebyshev, kingOf, neighbors, unitAt } from './board'
@@ -77,7 +77,7 @@ export function validHeals(state: GameState, unit: Unit): Coord[] {
     const dist = chebyshev(unit.pos, target.pos)
     const power = healPower(unit, dist)
     if (power === null || power <= 0) continue
-    const cap = STAT_CAP_BY_LEVEL[target.level]
+    const cap = statCap(playerRace(state, target.owner), target.type, target.level)
     if (target.stat >= cap) continue // ya está al máximo
     result.push(target.pos)
   }
@@ -99,11 +99,6 @@ export function validFusions(state: GameState, unit: Unit): Coord[] {
         u.id !== unit.id
       )
     })
-}
-
-/** Cap de stat para un nivel dado. */
-export function statCap(level: Level): number {
-  return STAT_CAP_BY_LEVEL[level]
 }
 
 /** Casillas vacías adyacentes al rey donde se puede reclutar. */
