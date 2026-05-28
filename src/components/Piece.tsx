@@ -120,12 +120,12 @@ export function Piece({ unit, race, selected, flip = false, onClick }: PieceProp
       >
         <UnitVisual key={imgSrc(unit, race)} unit={unit} race={race} />
 
-        {/* Stat (vida = ataque) como insignia */}
+        {/* HP actual como insignia (la cifra que cambia con el combate) */}
         <span
           className="absolute -right-[5%] -top-[5%] flex h-[36%] w-[36%] items-center justify-center rounded-full text-[100%] font-bold text-white"
           style={{ backgroundColor: color, boxShadow: '0 1px 3px rgba(0,0,0,0.6)' }}
         >
-          {unit.stat}
+          {unit.hp}
         </span>
 
         <LevelDots unit={unit} />

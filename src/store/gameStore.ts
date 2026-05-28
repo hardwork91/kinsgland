@@ -233,7 +233,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
     set({ selectedUnitId: attackerId })
     if (attacker && targetUnit) {
       const power = attackPower(attacker, chebyshev(attacker.pos, target)) ?? 0
-      const dmg = Math.min(Math.max(power, 0), targetUnit.stat)
+      // Daño visible = max(0, power) acotado por el HP actual del objetivo.
+      const dmg = Math.min(Math.max(power, 0), targetUnit.hp)
       get()._pushEffect(target.row, target.col, `-${dmg}`, 'dmg')
     }
     playSound('attack')
@@ -261,7 +262,9 @@ export const useGameStore = create<GameStore>((set, get) => ({
     set({ selectedUnitId: mageId })
     if (mage && target) {
       const power = healPower(mage, chebyshev(mage.pos, targetCoord)) ?? 0
-      get()._pushEffect(targetCoord.row, targetCoord.col, `+${Math.max(power, 0)}`, 'heal')
+      // Curación visible = lo que realmente se aplicará (capado por maxHp - hp).
+      const eff = Math.max(0, Math.min(power, target.maxHp - target.hp))
+      get()._pushEffect(targetCoord.row, targetCoord.col, `+${eff}`, 'heal')
     }
     playSound('heal')
     void performAction(gameId, actor, { type: 'heal', mageId, targetCoord })

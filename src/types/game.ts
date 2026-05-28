@@ -10,7 +10,7 @@ export type UnitType = 'king' | 'knight' | 'archer' | 'mage'
 /** Nivel de unidad (el rey no usa nivel). */
 export type Level = 1 | 2 | 3
 
-/** Razas disponibles. El rey es idéntico entre razas (stat 10, sin coste). */
+/** Razas disponibles. El rey es idéntico entre razas (HP 10, ataque 5). */
 export type Race = 'human' | 'orc' | 'elf'
 
 export const RACES: Race[] = ['human', 'orc', 'elf']
@@ -26,8 +26,16 @@ export interface Unit {
   owner: PlayerId
   /** Nivel actual (1-3). Para el rey es irrelevante. */
   level: Level
-  /** Stat actual = vida = ataque (= curación en mago). El rey arranca en 10. */
-  stat: number
+  /**
+   * Ataque base de la unidad. Constante: no baja con el daño recibido.
+   * Para arquero/mago hay falloff por distancia que se calcula sobre este valor.
+   * La fusión lo duplica.
+   */
+  attack: number
+  /** Vida actual. Cuando llega a 0 (o menos), la unidad muere. */
+  hp: number
+  /** Vida máxima a la que puede curarse. La fusión suma los maxHp de las dos fuentes. */
+  maxHp: number
   pos: Coord
   /** True si la unidad ya atacó este turno (no puede volver a atacar). */
   hasAttacked?: boolean
@@ -75,7 +83,10 @@ export interface GameState {
 
 export const MAX_AP_PER_TURN = 3
 export const STARTING_RESOURCES = 6
-export const KING_STAT = 10
+/** Vida del rey al inicio. */
+export const KING_HP = 10
+/** Ataque del rey (melee, dist 1). */
+export const KING_ATTACK = 5
 export const GAME_DURATION_MS = 15 * 60 * 1000 // 15 min
 
 /** Recursos obtenidos al matar una unidad según su nivel (no varía por raza). */
@@ -85,35 +96,33 @@ export const KILL_REWARD_BY_LEVEL: Record<Level, number> = {
   3: 3,
 }
 
-// --- Tablas por raza (stats por nivel y costes de reclutamiento) ---
+// --- Tablas base por raza (lvl 1 únicamente; niveles superiores se derivan vía fusión) ---
 
 type RaceUnit = Exclude<UnitType, 'king'>
 
 /**
- * Stat por (raza, tipo, nivel). El stat = vida = ataque, y también es el CAP
- * al que llega una unidad recién creada o tras fusionar.
+ * Ataque BASE (lvl 1) por (raza, tipo). La fusión lo duplica en cada nivel:
+ *   lvl 1: base. lvl 2: base*2. lvl 3: base*4.
  *
  * Diseño:
- *  - Humanos: baseline equilibrado (2/4/8 en todo).
- *  - Orcos:   melee duro (knight 3/6/12), ranged flojo (archer/mage 1/2/4).
- *  - Elfos:   ranged afinado (archer/mage 3/6/12), melee frágil (knight 1/2/4).
+ *  - Humanos: baseline equilibrado (atk 2 en todo).
+ *  - Orcos:   melee duro (knight atk 3), ranged flojo (archer/mage atk 1).
+ *  - Elfos:   ranged afinado (archer/mage atk 3), melee frágil (knight atk 1).
  */
-export const STAT_BY_RACE: Record<Race, Record<RaceUnit, Record<Level, number>>> = {
-  human: {
-    knight: { 1: 2, 2: 4, 3: 8 },
-    archer: { 1: 2, 2: 4, 3: 8 },
-    mage: { 1: 2, 2: 4, 3: 8 },
-  },
-  orc: {
-    knight: { 1: 3, 2: 6, 3: 12 },
-    archer: { 1: 1, 2: 2, 3: 4 },
-    mage: { 1: 1, 2: 2, 3: 4 },
-  },
-  elf: {
-    knight: { 1: 1, 2: 2, 3: 4 },
-    archer: { 1: 3, 2: 6, 3: 12 },
-    mage: { 1: 3, 2: 6, 3: 12 },
-  },
+export const BASE_ATTACK: Record<Race, Record<RaceUnit, number>> = {
+  human: { knight: 2, archer: 2, mage: 2 },
+  orc: { knight: 3, archer: 1, mage: 1 },
+  elf: { knight: 1, archer: 3, mage: 3 },
+}
+
+/**
+ * HP BASE (lvl 1) por (raza, tipo). Ratio 2:1 contra ataque (mismo ratio que
+ * el rey: 10 HP / 5 atk). La fusión SUMA HPs actuales (heredan daño).
+ */
+export const BASE_HP: Record<Race, Record<RaceUnit, number>> = {
+  human: { knight: 4, archer: 4, mage: 4 },
+  orc: { knight: 6, archer: 2, mage: 2 },
+  elf: { knight: 2, archer: 6, mage: 6 },
 }
 
 /** Coste de reclutamiento por (raza, tipo). */
@@ -139,9 +148,14 @@ export const RACE_LABEL: Record<Race, string> = {
 
 // --- Helpers de tablas (con backward-compat para partidas viejas) ---
 
-/** Cap (= stat inicial) de una unidad de raza/tipo/nivel. */
-export function statCap(race: Race, type: RaceUnit, level: Level): number {
-  return STAT_BY_RACE[race][type][level]
+/** Ataque base (lvl 1) para una raza/tipo. */
+export function baseAttack(race: Race, type: RaceUnit): number {
+  return BASE_ATTACK[race][type]
+}
+
+/** HP base (lvl 1) para una raza/tipo. */
+export function baseHp(race: Race, type: RaceUnit): number {
+  return BASE_HP[race][type]
 }
 
 /** Coste de reclutar una unidad de raza/tipo. */

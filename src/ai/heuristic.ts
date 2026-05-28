@@ -135,13 +135,14 @@ export function scoreState(state: GameState, perspective: PlayerId): number {
   if (!enemyKing) return 100000
 
   // Vida de los reyes (peso máximo: el objetivo es matar al enemigo)
-  score += myKing.stat * 60
-  score -= enemyKing.stat * 60
+  score += myKing.hp * 60
+  score -= enemyKing.hp * 60
 
-  // Valor de las unidades (stat + bonificación por nivel)
+  // Valor de las unidades: HP * 5 + ataque * 3 + bonus por nivel (mayor stat
+  // global). Refleja "cuánto daño puede causar y aguantar" antes de morir.
   for (const u of Object.values(state.units)) {
     if (u.type === 'king') continue
-    const value = u.stat * 5 + u.level * 4
+    const value = u.hp * 5 + u.attack * 3 + u.level * 4
     if (u.owner === perspective) score += value
     else score -= value
   }

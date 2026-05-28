@@ -3,7 +3,6 @@ import {
   MAX_AP_PER_TURN,
   playerRace,
   recruitCost,
-  statCap,
   type Coord,
   type GameResult,
   type GameState,
@@ -81,8 +80,9 @@ export function applyAttack(state: GameState, attackerId: string, target: Coord)
   let result: GameResult | null = state.result ?? null
   let phase = state.phase
 
-  const newStat = targetUnit.stat - power
-  if (newStat <= 0) {
+  // El daño se aplica directamente al HP (no al ataque, que es constante).
+  const newHp = targetUnit.hp - power
+  if (newHp <= 0) {
     delete units[targetUnit.id]
     if (targetUnit.type === 'king') {
       result = attacker.owner
@@ -98,7 +98,7 @@ export function applyAttack(state: GameState, attackerId: string, target: Coord)
       }
     }
   } else {
-    units[targetUnit.id] = { ...targetUnit, stat: newStat }
+    units[targetUnit.id] = { ...targetUnit, hp: newHp }
   }
 
   // El atacante queda marcado: no puede volver a atacar este turno.
@@ -109,7 +109,7 @@ export function applyAttack(state: GameState, attackerId: string, target: Coord)
 
 /**
  * Cura a un aliado en `targetCoord` con el mago `mageId` (se asume validado).
- * Cuesta 1 AP. La vida sube con falloff por distancia, hasta el cap del nivel del objetivo.
+ * Cuesta 1 AP. El HP sube con falloff por distancia, capado al maxHp del objetivo.
  */
 export function applyHeal(state: GameState, mageId: string, targetCoord: Coord): GameState {
   const mage = state.units[mageId]
@@ -119,12 +119,10 @@ export function applyHeal(state: GameState, mageId: string, targetCoord: Coord):
   if (target.type === 'king') return state
   const power = healPower(mage, chebyshev(mage.pos, targetCoord))
   if (power === null || power <= 0) return state
-  const race = playerRace(state, target.owner)
-  const cap = statCap(race, target.type, target.level)
-  const newStat = Math.min(target.stat + power, cap)
+  const newHp = Math.min(target.hp + power, target.maxHp)
   return {
     ...state,
-    units: { ...state.units, [target.id]: { ...target, stat: newStat } },
+    units: { ...state.units, [target.id]: { ...target, hp: newHp } },
     apRemaining: state.apRemaining - 1,
   }
 }
@@ -132,8 +130,14 @@ export function applyHeal(state: GameState, mageId: string, targetCoord: Coord):
 /**
  * Fusiona la unidad `sourceId` sobre la unidad en `targetCoord` (se asume validado:
  * mismo tipo, mismo nivel, adyacentes, nivel < 3). Cuesta 1 AP.
- * Resultado: la unidad destino sube de nivel, su stat = suma (con cap según la raza
- * del dueño), y la unidad origen desaparece. La pieza resultante queda en destino.
+ *
+ * Resultado:
+ *  - El ataque se DUPLICA (source.attack * 2; ambas tienen el mismo atk por
+ *    venir de mismo tipo/nivel/raza).
+ *  - El HP actual SUMA (heredan el daño: dos unidades dañadas se quedan
+ *    dañadas tras fusionar).
+ *  - El maxHp SUMA (cap de curación crece con la fusión).
+ *  - La unidad sube de nivel y la fuente desaparece.
  */
 export function applyFusion(state: GameState, sourceId: string, targetCoord: Coord): GameState {
   const source = state.units[sourceId]
@@ -142,13 +146,20 @@ export function applyFusion(state: GameState, sourceId: string, targetCoord: Coo
   if (source.type === 'king' || target.type === 'king') return state
 
   const newLevel = (source.level + 1) as Level
-  const race = playerRace(state, source.owner)
-  const cap = statCap(race, source.type, newLevel)
-  const newStat = Math.min(source.stat + target.stat, cap)
+  const newAttack = source.attack * 2
+  const newHp = source.hp + target.hp
+  const newMaxHp = source.maxHp + target.maxHp
 
   const units = { ...state.units }
   delete units[source.id]
-  units[target.id] = { ...target, level: newLevel, stat: newStat, pos: { ...targetCoord } }
+  units[target.id] = {
+    ...target,
+    level: newLevel,
+    attack: newAttack,
+    hp: newHp,
+    maxHp: newMaxHp,
+    pos: { ...targetCoord },
+  }
 
   return { ...state, units, apRemaining: state.apRemaining - 1 }
 }
@@ -244,8 +255,8 @@ export function endTurn(state: GameState): GameState {
  */
 export function resolveTimeout(state: GameState): GameState {
   if (state.phase === 'finished') return state
-  const hpA = kingOf(state, 'A')?.stat ?? 0
-  const hpB = kingOf(state, 'B')?.stat ?? 0
+  const hpA = kingOf(state, 'A')?.hp ?? 0
+  const hpB = kingOf(state, 'B')?.hp ?? 0
   let result: GameResult = 'draw'
   if (hpA > hpB) result = 'A'
   else if (hpB > hpA) result = 'B'

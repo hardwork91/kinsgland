@@ -1,6 +1,13 @@
-import { playerRace, recruitCost, unitLabel, type UnitType } from '../types/game'
+import {
+  baseAttack,
+  baseHp,
+  playerRace,
+  recruitCost,
+  unitLabel,
+  type UnitType,
+} from '../types/game'
 import { useGameStore } from '../store/gameStore'
-import { UNIT_META, unitPortrait } from './unitMeta'
+import { unitPortrait } from './unitMeta'
 import { OrnateFrame } from './OrnateFrame'
 import { SectionTitle } from './SectionTitle'
 import { Coin } from './Coin'
@@ -23,7 +30,6 @@ export function UnitsCatalog() {
         <SectionTitle>Tus unidades</SectionTitle>
         <div className="flex flex-col gap-2">
           {TYPES.map((t) => {
-            const m = UNIT_META[t]
             const name = unitLabel(race, t)
             const cost = recruitCost(race, t)
             return (
@@ -45,7 +51,11 @@ export function UnitsCatalog() {
                       {cost}
                     </span>
                   </div>
-                  <p className="text-xs leading-tight text-slate-400">{m.desc}</p>
+                  <div className="font-mono text-xs">
+                    <span className="text-amber-300">Atk {baseAttack(race, t)}</span>
+                    <span className="text-slate-500"> · </span>
+                    <span className="text-emerald-300">HP {baseHp(race, t)}</span>
+                  </div>
                 </div>
               </div>
             )

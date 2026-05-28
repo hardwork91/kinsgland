@@ -2,7 +2,6 @@ import {
   MAX_AP_PER_TURN,
   playerRace,
   recruitCost,
-  statCap,
   unitLabel,
   type GameState,
   type UnitType,
@@ -82,13 +81,13 @@ export function InfoPanel({ state }: { state: GameState }) {
                     )}
                   </div>
                   <div className="text-sm text-neutral-200">
-                    Stat <b className="text-amber-300">{sel.stat}</b>
-                    {sel.type !== 'king' && (
-                      <span className="text-slate-500">
-                        {' '}
-                        / {statCap(selRace, sel.type, sel.level)}
-                      </span>
-                    )}
+                    <span>
+                      Atk <b className="text-amber-300">{sel.attack}</b>
+                    </span>
+                    <span className="ml-3">
+                      HP <b className="text-emerald-300">{sel.hp}</b>
+                      <span className="text-slate-500"> / {sel.maxHp}</span>
+                    </span>
                   </div>
                   <p className="mt-1 text-xs leading-tight text-slate-400">
                     {UNIT_META[sel.type].desc}

@@ -1,29 +1,26 @@
-import {
-  playerRace,
-  statCap,
-  type Coord,
-  type GameState,
-  type Unit,
-} from '../types/game'
+import { type Coord, type GameState, type Unit } from '../types/game'
 import { chebyshev, kingOf, neighbors, unitAt } from './board'
 
 /**
  * Poder de ataque de una unidad a una distancia dada.
  * Devuelve null si el objetivo está fuera de alcance.
- * - Caballero / Rey: solo melee (dist 1), daño = stat.
- * - Arquero: sweet spot dist 2; daño = stat - |dist - 2|; alcance 1..3.
- * - Mago: sweet spot dist 1; daño = stat - (dist - 1); alcance 1..3.
+ * - Caballero / Rey: solo melee (dist 1), daño = attack.
+ * - Arquero: sweet spot dist 2; daño = attack - |dist - 2|; alcance 1..3.
+ * - Mago: sweet spot dist 1; daño = attack - (dist - 1); alcance 1..3.
+ *
+ * El ataque base de la unidad NO cambia con el daño recibido; solo cambia
+ * por fusión (que lo duplica).
  */
 export function attackPower(attacker: Unit, dist: number): number | null {
   if (dist < 1) return null
   switch (attacker.type) {
     case 'king':
     case 'knight':
-      return dist === 1 ? attacker.stat : null
+      return dist === 1 ? attacker.attack : null
     case 'archer':
-      return dist <= 3 ? attacker.stat - Math.abs(dist - 2) : null
+      return dist <= 3 ? attacker.attack - Math.abs(dist - 2) : null
     case 'mage':
-      return dist <= 3 ? attacker.stat - (dist - 1) : null
+      return dist <= 3 ? attacker.attack - (dist - 1) : null
   }
 }
 
@@ -31,7 +28,7 @@ export function attackPower(attacker: Unit, dist: number): number | null {
 export function healPower(mage: Unit, dist: number): number | null {
   if (mage.type !== 'mage') return null
   if (dist < 1 || dist > 3) return null
-  return mage.stat - (dist - 1)
+  return mage.attack - (dist - 1)
 }
 
 /** ¿El rey tiene escolta? (al menos un aliado adyacente → intocable). */
@@ -65,7 +62,7 @@ export function validAttacks(state: GameState, unit: Unit): Coord[] {
   return result
 }
 
-/** Aliados a los que un mago puede curar (no rey, no a sí mismo, por debajo del cap). */
+/** Aliados a los que un mago puede curar (no rey, no a sí mismo, con HP < maxHp). */
 export function validHeals(state: GameState, unit: Unit): Coord[] {
   if (unit.type !== 'mage') return []
   const result: Coord[] = []
@@ -77,8 +74,7 @@ export function validHeals(state: GameState, unit: Unit): Coord[] {
     const dist = chebyshev(unit.pos, target.pos)
     const power = healPower(unit, dist)
     if (power === null || power <= 0) continue
-    const cap = statCap(playerRace(state, target.owner), target.type, target.level)
-    if (target.stat >= cap) continue // ya está al máximo
+    if (target.hp >= target.maxHp) continue // ya está al máximo
     result.push(target.pos)
   }
   return result
