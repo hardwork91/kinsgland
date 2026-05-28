@@ -1,4 +1,4 @@
-import { BOARD_SIZE, MAX_AP_PER_TURN, type Coord, type Unit } from '../types/game'
+import { BOARD_SIZE, MAX_AP_PER_TURN, playerRace, type Coord, type Unit } from '../types/game'
 import { useGameStore } from '../store/gameStore'
 import {
   validAttacks,
@@ -225,6 +225,7 @@ export function Board() {
               <Piece
                 key={unit.id}
                 unit={unit}
+                race={playerRace(state, unit.owner)}
                 selected={unit.id === selectedUnitId}
                 flip={flip}
                 onClick={() => onPieceClick(unit)}

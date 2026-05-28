@@ -1,6 +1,6 @@
 import { playerRace, recruitCost, unitLabel, type UnitType } from '../types/game'
 import { useGameStore } from '../store/gameStore'
-import { UNIT_META } from './unitMeta'
+import { UNIT_META, unitPortrait } from './unitMeta'
 import { OrnateFrame } from './OrnateFrame'
 import { SectionTitle } from './SectionTitle'
 import { Coin } from './Coin'
@@ -32,7 +32,7 @@ export function UnitsCatalog() {
                 className="flex items-center gap-2 rounded-md border border-amber-700/30 bg-slate-800/60 p-2"
               >
                 <img
-                  src={m.portrait}
+                  src={unitPortrait(race, t)}
                   alt={name}
                   className="h-12 w-12 shrink-0 object-contain drop-shadow"
                   draggable={false}

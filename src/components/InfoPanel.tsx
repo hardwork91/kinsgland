@@ -9,7 +9,7 @@ import {
 } from '../types/game'
 import { useGameStore } from '../store/gameStore'
 import { validRecruitCells } from '../game/rules'
-import { UNIT_META } from './unitMeta'
+import { UNIT_META, unitPortrait } from './unitMeta'
 import { GOLD_BTN } from './theme'
 import { OrnateFrame } from './OrnateFrame'
 import { SectionTitle } from './SectionTitle'
@@ -65,7 +65,7 @@ export function InfoPanel({ state }: { state: GameState }) {
             {sel ? (
               <div className="flex gap-3">
                 <img
-                  src={UNIT_META[sel.type].portrait}
+                  src={unitPortrait(selRace, sel.type, sel.level)}
                   alt={unitLabel(selRace, sel.type)}
                   className="h-16 w-16 shrink-0 object-contain drop-shadow"
                   draggable={false}
