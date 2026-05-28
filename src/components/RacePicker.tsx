@@ -1,4 +1,4 @@
-import { RACE_LABEL, RACES, type Race } from '../types/game'
+import { isAIPlayer, RACE_LABEL, RACES, type Race } from '../types/game'
 import { useGameStore } from '../store/gameStore'
 import { OrnateFrame } from './OrnateFrame'
 import { GOLD_BTN } from './theme'
@@ -20,6 +20,7 @@ export function RacePicker() {
   const turnPlayer = state.players[state.currentTurn]
   const otherId = state.currentTurn === 'A' ? 'B' : 'A'
   const other = state.players[otherId]
+  const turnIsAI = isAIPlayer(state, state.currentTurn)
 
   return (
     <div className="flex min-h-full flex-col items-center justify-center bg-neutral-900 px-3 py-6 text-neutral-100">
@@ -32,7 +33,7 @@ export function RacePicker() {
             </>
           ) : (
             <>
-              ⏳ Esperando a <strong>{turnPlayer.name}</strong>…
+              {turnIsAI ? '🤖' : '⏳'} Esperando a <strong>{turnPlayer.name}</strong>…
             </>
           )}
           {other.race && (

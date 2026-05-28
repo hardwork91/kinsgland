@@ -39,6 +39,8 @@ export interface PlayerState {
   resources: number
   /** Raza elegida en la fase 'pickRace'. null hasta que el jugador elija. */
   race: Race | null
+  /** True si este jugador es la computadora (IA) en modo PvE. */
+  isAI?: boolean
 }
 
 export type GamePhase = 'lobby' | 'pickRace' | 'placement' | 'playing' | 'finished'
@@ -155,4 +157,9 @@ export function unitLabel(race: Race, type: UnitType): string {
 /** Devuelve la raza del jugador, con fallback a 'human' (partidas pre-razas). */
 export function playerRace(state: GameState, owner: PlayerId): Race {
   return state.players[owner]?.race ?? 'human'
+}
+
+/** ¿Este jugador es la computadora? */
+export function isAIPlayer(state: GameState, owner: PlayerId): boolean {
+  return state.players[owner]?.isAI === true
 }

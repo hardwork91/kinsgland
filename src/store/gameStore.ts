@@ -62,6 +62,8 @@ interface GameStore {
   joinMatch: (code: string, name: string) => Promise<void>
   /** Partida local hot-seat: crea y se une en el mismo dispositivo. */
   startLocalGame: (name: string) => Promise<void>
+  /** Partida vs IA (computadora). El humano es A, la IA es B. */
+  startAIGame: (name: string) => Promise<void>
   /** Reconecta a la partida guardada (si existe en el backend). */
   tryReconnect: () => Promise<void>
   /** Vuelve al menú (abandona la partida actual). */
@@ -140,6 +142,17 @@ export const useGameStore = create<GameStore>((set, get) => ({
     const unsub = subscribeToGame(gameId, (s) => set({ state: s }))
     set({ gameId, playerId, local: true, _unsub: unsub })
     saveSession(gameId, playerId)
+  },
+
+  startAIGame: async (name) => {
+    if (get().gameId) return
+    const { gameId, playerId } = await createGame(name || 'Jugador')
+    // La IA es jugador B; se une con flag isAI=true.
+    await joinGame(gameId, 'Computadora', true)
+    const unsub = subscribeToGame(gameId, (s) => set({ state: s }))
+    // local=false: tu solo controlas A; la IA actua en su turno vía el AI driver.
+    set({ gameId, playerId, local: false, _unsub: unsub })
+    // No guardamos la sesion vs IA (es desechable; no queremos reconectarnos).
   },
 
   tryReconnect: async () => {
