@@ -67,7 +67,7 @@ export function InfoPanel({ state }: { state: GameState }) {
                 <img
                   src={unitPortrait(selRace, sel.type, sel.level)}
                   alt={unitLabel(selRace, sel.type)}
-                  className="h-16 w-16 shrink-0 object-contain drop-shadow"
+                  className="h-32 w-32 shrink-0 object-contain drop-shadow"
                   draggable={false}
                 />
                 <div className="min-w-0">
